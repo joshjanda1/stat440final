@@ -11,6 +11,10 @@ cleaning:
 - check for duplicates
 - merge on teams?
 - merge on names, only include where they are equal (use scan to do names)
+- lng cannot be greater than 100
+- pct cannot be gretaer than 100
+- fmbl cannot be greater than fmb
+- receptions cannot be greater than tgt
 
 formats:
 - case in arrests data

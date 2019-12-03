@@ -13,9 +13,10 @@ data finproj.receiving;
 run;
 	
 data finproj.arrests;
-	infile '/folders/myfolders/finalproject/arrestincidents.csv' dlm = ',' firstobs=2;
+	infile '/folders/myfolders/finalproject/arrestincidents.csv' dlm = ',' firstobs=2 dsd missover;
 	input date :mmddyy10. team :$3. name :$28. position :$3. case :$12.
-		  category :$18. description :$256.;
+		  category :$36. description :$256. outcome :$128;
+	format date mmddyy10.;
 run;
 
 proc freq data=finproj.receiving nlevels;
@@ -24,6 +25,14 @@ run;
 
 proc freq data=finproj.receiving;
 	tables team;
+run;
+
+proc freq data=finproj.arrests;
+	tables case;
+run;
+
+proc print data=finproj.arrests;
+	where case = 'Died';
 run;
 /*includes stl, which is now LA*/
 

@@ -6,7 +6,7 @@ cleaning:
 - prepared data by using dsd and missover
 - loaded in data
 - found 33 teams rather than 32, inspected data
-- missing values and nlevels
+- missing values and nlevels -> check for arrests
 - need to figure out how to supress warnings for '-' as missing values
 - check for duplicates
 - merge on teams?

@@ -3,8 +3,8 @@ create performance variable based on yardage
 
 cleaning:
 - look at variables for extreme values and missing
-- prepared data by using dsd and missover
-- loaded in data
+- prepared data by using dsd and missover <- done
+- loaded in data <- done
 - found 33 teams rather than 32, inspected data
 - missing values and nlevels -> check for arrests
 - need to figure out how to supress warnings for '-' as missing values
@@ -18,10 +18,10 @@ cleaning:
 
 formats:
 - case in arrests data
-- date in arrests
-- reformat weeks from 101-117 to 1-17
+- date in arrests <- done (josh)
+- reformat weeks from 101-117 to 1-17 <- done (josh)
 
 todo:
 - look at frequency of arrests by teams/city or position
 - most frequent crime categories
-- group by team then category/case
+- group by team then category/case <- done (josh)

@@ -21,6 +21,8 @@ formats:
 - date in arrests <- done (josh)
 - reformat weeks from 101-117 to 1-17 <- done (josh)
 
+labels:
+
 todo:
 - look at frequency of arrests by teams/city or position
 - most frequent crime categories

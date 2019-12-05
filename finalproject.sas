@@ -63,8 +63,14 @@ data finproj.receiving;
 		  fum = "Number of Fumbles"
 		  fuml = "Number of Fumbles Lost"
 		  season = "Season Year"
-		  wk = "Week of Season";
+		  wk = "Week of Season"
+		  catch_pct = "caught/targets"
+		  preformance = "how well the player did that week";
 	catch_pct = round(rec/tgt,.01);
+	if yds >= 150 then preformance = "phenomenal";
+	if yds <= 50 then preformance = "bad";
+	if yds >= 50 then preformance = "good";
+	if yds >= 100 then preformance = "great";
 run;
 
 data finproj.arrests;
@@ -126,7 +132,7 @@ proc print data=finproj.receiving;
 	where rec>tgt;
 run;
 
-/*obs 51808 what do we do?*/
+/*obs 51808 what do we do? just set target to 1 */
 
 /* Cleaning section*/
 data finproj.clean_arrests;
@@ -134,6 +140,14 @@ data finproj.clean_arrests;
  if position = "DE/" then position = "DE";
  if team = "Fre" then team = "Free Agent";
 run;
+
+data finproj.clean_receiving;
+	set finproj.receiving;
+	if name = "Peters, Jason" then tgt = 1;
+	if team = "ARZ" then team = "ARI";
+	if team = "JAX" then team = "JAC";
+	if team = "LA" then team = "LAR";
+	run;
 /*GROUPING SECTION*/
 
 proc sql;
@@ -151,7 +165,39 @@ proc sql;
 	group by position;
 quit;
 
-/*conditional output*/
+/*which positions have mose arrests*/
+
+
+data finproj.off_def;
+	set finproj.clean_arrests;
+	off_def = position;
+	if position = 'C' then off_def = "O";
+if position ='CB' then off_def = "D";
+if position ='DB' then off_def = "D";
+if position ='DE' then off_def ="D";
+if position ='DT' then off_def =	"D";
+if position ='FB' then off_def = "O"	;
+if position ='K' then off_def = "O";
+if position ='LB' then off_def =	"D";
+if position ='OG' then off_def ="O";
+if position ='OL' then off_def =	"O";
+if position ='OT' then off_def =	"O";
+if position ='P' then off_def	="O";
+if position ='QB' then off_def =	"O";
+if position ='RB' then off_def =	"O";
+if position ='S' then off_def	="D";
+if position ='TE' then off_def = 	"O";
+if position ='WR' then off_def ="O";
+run;
+
+proc sql;
+	select off_def, count(off_def) as count
+	from finproj.off_def
+	group by off_def;
+quit;
+
+ /* defense players committed more crimes*/
+
 
 proc sql;
 	select  name,season, max(yds) as max
@@ -159,6 +205,18 @@ proc sql;
 	group by season
 	having yds = calculated max;
 quit;
+
+/*most yards in a game per season*/
+
+proc sql;
+	select team, season, max(sum)
+	from (select team, season, sum(td) as sum
+		  from finproj.receiving
+		  group by team, season)
+	group by team, season;
+quit;
+
+/*max td catches by team by season*/
 
 proc sql;
 	select team, sum(yds) as sum
@@ -171,6 +229,20 @@ quit;
 
 
 /* found an error where one position is DE/*/
-/* somehow group into offense/defense to see who commits more crimes*/
+
+/*Merge*/
+
+proc sql;
+select a.team, sumarrests, totalyds
+from (select team, count(case1) as sumarrests from finproj.arrests
+     where position = "WR"
+     group by team) as a
+inner join (select team, sum(yds) as totalyds
+from finproj.receiving
+group by team) as r
+on a.team = r.team
+order by totalyds desc;
+quit;
+
 
 /* Iterative Processing

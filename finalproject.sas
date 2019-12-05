@@ -1,4 +1,4 @@
-libname finproj '/folders/myfolders/stat440final/';
+libname finproj '~/my_courses/HW/';
 
 
 proc format;
@@ -30,8 +30,22 @@ proc format;
 				117 = 17;
 run;
 
+proc format;
+	value $caseclass
+	'Arrested'	= '1'
+'Charged'	= '2'
+'Cited'	='3'
+'Detained'='4'
+'Died'	='5'
+'Indicted'='6'
+'Jailed'	='7'
+'Summoned'	='8'
+'Surrendered'='9'
+'Warrant'='10';
+run;
+
 data finproj.receiving;
-	infile '/folders/myfolders/stat440final/receiving.csv' dlm = ',' firstobs=2 dsd missover;
+	infile '/home/u42578782/my_courses/HW/receiving.csv' dlm = ',' firstobs=2 dsd missover;
 	input name :$28. team :$3. rec :4. yds :5. tgt :4. avg :4.
 		  td :4. fstdn :4. pct :3. lng :4. fum :4. fuml :4.
 		  season :4. wk :4.;
@@ -50,13 +64,15 @@ data finproj.receiving;
 		  fuml = "Number of Fumbles Lost"
 		  season = "Season Year"
 		  wk = "Week of Season";
+	catch_pct = round(rec/tgt,.01);
 run;
 
 data finproj.arrests;
-	infile '/folders/myfolders/stat440final/arrestincidents.csv' dlm = ',' firstobs=2 dsd missover;
+	infile '/home/u42578782/my_courses/HW/ArrestIncidents.csv' dlm = ',' firstobs=2 dsd missover;
 	input date :mmddyy10. team :$3. name :$28. position :$3. case1 :$12.
 		  category :$36. description :$256. outcome :$128;
 	format date mmddyy10.;
+	format case1 $caseclass.;
 	label date = "Date of Incident"
 		  team = "Team of Player"
 		  name = "Name of Player"
@@ -75,8 +91,14 @@ proc freq data=finproj.receiving;
 	tables team;
 run;
 
+proc freq data=finproj.arrests nlevels;
+	tables team;
+run;
+
+/*should be 32, see Free agent/SD/STL*/
+
 proc freq data=finproj.arrests;
-	tables case;
+	tables case1;
 run;
 
 proc print data=finproj.arrests;
@@ -92,10 +114,63 @@ proc univariate data=finproj.receiving;
 	var pct;
 run;
 
+proc univariate data=finproj.receiving;
+ var lng;
+run;
+
+proc print data=finproj.receiving;
+	where fuml>fum;
+run;
+
+proc print data=finproj.receiving;
+	where rec>tgt;
+run;
+
+/*obs 51808 what do we do?*/
+
+/* Cleaning section*/
+data finproj.clean_arrests;
+	set finproj.arrests;
+ if position = "DE/" then position = "DE";
+ if team = "Fre" then team = "Free Agent";
+run;
 /*GROUPING SECTION*/
 
 proc sql;
-	select team, case1 as Case, count(case1) as NumCases
+	select team, count(case1) as NumCases
 	from finproj.arrests
-	group by team, case1;
+	group by team
+	order by NumCases desc;
 quit;
+
+/*which teams have most arrests*/
+
+proc sql;
+	select position, count(position) as count
+	from finproj.clean_arrests
+	group by position;
+quit;
+
+/*conditional output*/
+
+proc sql;
+	select  name,season, max(yds) as max
+	from finproj.receiving
+	group by season
+	having yds = calculated max;
+quit;
+
+proc sql;
+	select team, sum(yds) as sum
+	from finproj.receiving
+	group by team
+	order by calculated sum desc;
+quit;
+
+/*better teams have more passing yards*/
+
+
+/* found an error where one position is DE/*/
+/* somehow group into offense/defense to see who commits more crimes*/
+
+/* Iterative Processing

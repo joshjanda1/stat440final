@@ -1,9 +1,6 @@
 libname finproj '~/my_courses/HW/';
 
 
-proc format;
-	invalue avgin '-' = .;
-run;
 
 /*FORMATS SECTION*/
 proc freq data=finproj.receiving;

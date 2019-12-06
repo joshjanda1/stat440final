@@ -1,7 +1,4 @@
-libname finproj '~/my_courses/HW/';
-
-
-
+libname finproj '/folders/myfolders/finalproject/';
 /*FORMATS SECTION*/
 proc freq data=finproj.receiving;
 	tables wk;
@@ -26,23 +23,10 @@ proc format;
 				116 = 16
 				117 = 17;
 run;
-
-proc format;
-	value $caseclass
-	'Arrested'	= '1'
-'Charged'	= '2'
-'Cited'	='3'
-'Detained'='4'
-'Died'	='5'
-'Indicted'='6'
-'Jailed'	='7'
-'Summoned'	='8'
-'Surrendered'='9'
-'Warrant'='10';
-run;
-
+/*End Formats*/
+/*Data Reading*/
 data finproj.receiving;
-	infile '/home/u42578782/my_courses/HW/receiving.csv' dlm = ',' firstobs=2 dsd missover;
+	infile '/folders/myfolders/finalproject/receiving.csv' dlm = ',' firstobs=2 dsd missover;
 	input name :$28. team :$3. rec :4. yds :5. tgt :4. avg :4.
 		  td :4. fstdn :4. pct :3. lng :4. fum :4. fuml :4.
 		  season :4. wk :4.;
@@ -71,64 +55,86 @@ data finproj.receiving;
 run;
 
 data finproj.arrests;
-	infile '/home/u42578782/my_courses/HW/ArrestIncidents.csv' dlm = ',' firstobs=2 dsd missover;
+	infile '/folders/myfolders/finalproject/ArrestIncidents.csv' dlm = ',' firstobs=2 dsd missover;
 	input date :mmddyy10. team :$3. name :$28. position :$3. case1 :$12.
 		  category :$36. description :$256. outcome :$128;
 	format date mmddyy10.;
-	format case1 $caseclass.;
 	label date = "Date of Incident"
 		  team = "Team of Player"
 		  name = "Name of Player"
 		  position = "Player's Position"
-		  case = "Incident Type"
+		  case1 = "Incident Type"
 		  category = " Incident Crime Categories"
 		  description = "Description of Crime"
 		  outcome = "Incident outcome description";
 run;
-
+/*End Data Reading*/
+/*Being Analyzing Data*/
+/*Table 1*/
 proc freq data=finproj.receiving nlevels;
 	tables _all_ /noprint;
 run;
-
+/*Table 2*/
+proc freq data=finproj.arrests nlevels;
+	tables _all_ /noprint;
+run;
+/*Figure 1*/
 proc freq data=finproj.receiving;
 	tables team;
 run;
-
+/*Figure 2*/
 proc freq data=finproj.arrests nlevels;
 	tables team;
 run;
 
-/*should be 32, see Free agent/SD/STL*/
-
+/*should be 32, see Free agent/SD/STL*, changed team names to be same in each dataset where possible*/
+/*includes stl, which is now LA*/
 proc freq data=finproj.arrests;
 	tables case1;
-run;
-
-proc print data=finproj.arrests;
-	where case = 'Died';
-run;
-/*includes stl, which is now LA*/
+run; /*looks good*/
 
 proc univariate data=finproj.receiving;
 	var avg;
-run;
+run; /*looks good*/
 
 proc univariate data=finproj.receiving;
 	var pct;
-run;
+run; /*looks good*/
 
 proc univariate data=finproj.receiving;
- var lng;
-run;
+	var lng;
+run; /*looks good*/
 
+proc univariate data=finproj.receiving;
+	var rec;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var yds;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var tgt;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var td;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var fstdn;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var fum;
+run; /*looks good*/
+proc univariate data=finproj.receiving;
+	var fuml;
+run; /*looks good*/
 proc print data=finproj.receiving;
 	where fuml>fum;
-run;
+run; /*no case*/
 
+/*Figure 3*/
 proc print data=finproj.receiving;
+	var team name rec tgt;
 	where rec>tgt;
-run;
-
+run; /*one case,fixed*/
 /*obs 51808 what do we do? just set target to 1 */
 
 /* Cleaning section*/
@@ -147,15 +153,21 @@ data finproj.clean_receiving;
 	run;
 /*GROUPING SECTION*/
 
+/*Figure 7*/
 proc sql;
 	select team, count(case1) as NumCases
-	from finproj.arrests
+	from finproj.clean_arrests
 	group by team
 	order by NumCases desc;
 quit;
 
 /*which teams have most arrests*/
-
+/*Figure 4 and Figure 8*/
+proc sql;
+	select position, count(position) as count
+	from finproj.arrests
+	group by position;
+quit;
 proc sql;
 	select position, count(position) as count
 	from finproj.clean_arrests
@@ -187,6 +199,7 @@ if position ='TE' then off_def = 	"O";
 if position ='WR' then off_def ="O";
 run;
 
+/*Figure 6*/
 proc sql;
 	select off_def, count(off_def) as count
 	from finproj.off_def
@@ -195,40 +208,40 @@ quit;
 
  /* defense players committed more crimes*/
 
-
+/*Figure 9*/
 proc sql;
-	select  name,season, max(yds) as max
+	select  name,season, max(yds) as MaxYds
 	from finproj.receiving
 	group by season
-	having yds = calculated max;
+	having yds = calculated MaxYds;
 quit;
-
 /*most yards in a game per season*/
-
+/*Figure 10*/
 proc sql;
-	select team, season, max(sum)
-	from (select team, season, sum(td) as sum
-		  from finproj.receiving
-		  group by team, season)
-	group by team, season;
-quit;
-
-/*max td catches by team by season*/
-
-proc sql;
-	select team, sum(yds) as sum
+	select team, sum(yds) as TotYds
 	from finproj.receiving
 	group by team
-	order by calculated sum desc;
+	order by calculated TotYds desc;
 quit;
-
 /*better teams have more passing yards*/
-
-
-/* found an error where one position is DE/*/
+/*Figure 11*/
+proc sort data=finproj.clean_receiving;
+	by wk;
+	where season = 2016 and team = "NE";
+run;
+data total_rec_by_NE_2016;
+	set finproj.clean_receiving;
+	by wk;
+	if first.wk then total_yds = 0;
+	total_yds + yds;
+	if last.wk;
+	keep wk total_yds;
+run;
+proc print data=total_rec_by_NE_2016;run;
+/*End Figure 11*/
 
 /*Merge*/
-
+/*Figure 5*/
 proc sql;
 select a.team, sumarrests, totalyds
 from (select team, count(case1) as sumarrests from finproj.arrests
@@ -240,19 +253,7 @@ group by team) as r
 on a.team = r.team
 order by totalyds desc;
 quit;
-
-proc sort data=finproj.clean_receiving;
-	by wk;
-	where season = 2016 and team = "NE";
-run;
-
-data total_rec_by_NE_2016;
-	set finproj.clean_receiving;
-	by wk;
-	if first.wk then total_yds = 0;
-	total_yds + yds;
-	if last.wk;
-	keep wk total_yds;
-run;
+/*better teams do not have more arrests, please mention that our belief was incorrect*/
 
 
+/* Iterative Processing

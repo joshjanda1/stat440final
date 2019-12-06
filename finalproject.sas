@@ -244,5 +244,18 @@ on a.team = r.team
 order by totalyds desc;
 quit;
 
+proc sort data=finproj.clean_receiving;
+	by wk;
+	where season = 2016 and team = "NE";
+run;
 
-/* Iterative Processing
+data total_rec_by_NE_2016;
+	set finproj.clean_receiving;
+	by wk;
+	if first.wk then total_yds = 0;
+	total_yds + yds;
+	if last.wk;
+	keep wk total_yds;
+run;
+
+

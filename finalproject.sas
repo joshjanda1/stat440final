@@ -256,4 +256,3 @@ quit;
 /*better teams do not have more arrests, please mention that our belief was incorrect*/
 
 
-/* Iterative Processing
